@@ -1,0 +1,214 @@
+import random
+
+class Prey(object):
+	def __init__(self, chromo):		
+		self.chromo = chromo
+	def getChromo(self):
+		return self.chromo	
+	def eat(self):
+		x=0
+	def cross(self, list1):
+		breakPoint = random.randint(1,9)
+		child = []
+		cP2 = self.chromo[:breakPoint]
+		cP1 = list1[breakPoint:]
+		c1 = cP2+cP1
+		cP2 = self.chromo[breakPoint:]
+		cP1 = list1[:breakPoint]
+		c2 = cP1 + cP2
+
+		self.mutate(c2)
+		self.mutate(c1)
+
+		child.append(c1)
+		child.append(c2)
+
+		return child
+
+	def mutate(self, chromo):
+		for i in range(9):
+			posMut = random.randint(0,100)
+			if posMut < 5:
+				if chromo[i] == 0:
+					chromo[i] = 1
+				else:
+					chromo[i] = 0
+
+	def isHealthy(self):
+		if self.chromo[len(self.chromo)-1] == 0:
+			return False
+		return True
+
+	def isFast(self):
+		three = self.chromo[:3]
+		sumList = sum(three)
+		if sumList >= 3:
+			return True
+		return False
+
+	def superSpeed(self):
+		seven = self.chromo[3:8]
+		sumList = sum(seven)
+		return sumList
+
+	def isFit(self):
+		if self.isHealthy()==True and self.isFast(
+			)==True and self.fight() == True:
+			return True
+		
+		return False
+
+	def fight(self):
+		predPoint = random.randint(0,10)
+		preyPoint = random.randint(0,10) + self.superSpeed()
+		if predPoint > preyPoint:
+			return False
+		return True
+
+	def getScore(self):
+		return sum(self.chromo)
+
+class Map(object):
+	def __init__(self, gen):
+		self.gen = gen
+		self.popDNA = []
+		self.currPrey = []
+
+	def initPop(self):
+		for prey in range(10):
+			chromoString = []
+			for i in range(10):
+				rand = random.randint(0,1)
+				chromoString.append(rand)
+
+			preyIndiv = Prey(chromoString)
+			self.currPrey.append(preyIndiv)
+		
+
+	def checkFitness(self):
+
+		for indiv in self.currPrey:
+			if indiv.isFit() == False:
+				self.currPrey.remove(indiv)
+			else:
+				self.popDNA.append(indiv.getChromo())
+
+	def pairs(self):
+		score = []		
+
+		for indiv in self.currPrey:
+			for i in range(indiv.getScore()):
+				score.append(self.currPrey.index(indiv))
+
+		pair = []
+		for i in range(2):
+			choose = random.randint(1,len(score)-1)
+			index = score[choose]
+			indiv = self.currPrey[index]
+			pair.append(indiv)	
+
+		return pair
+
+	def crossover(self):
+		#self.currPrey = []
+		currPrey = []
+		for i in range(5):
+			children = self.pairs()[0].cross(self.pairs()[1].getChromo())
+			child1 = Prey(children[0])
+			child2 = Prey(children[1])
+			currPrey.append(child1)
+			currPrey.append(child2)
+		self.currPrey = currPrey
+		
+		return self.currPrey
+
+	def generation(self):
+		self.initPop()
+
+		for i in range(self.gen):
+			self.checkFitness()
+			if self.killswitch():
+				return False
+			self.pairs()
+			self.crossover()
+		toReturn = []
+		for i in self.currPrey:
+			toReturn.append(i.getChromo())
+		return toReturn
+
+	def killswitch(self):
+		if len(self.currPrey) <=1:
+			return True
+def start():
+	totPop=[]
+	startPop = []
+	#initial population
+	for j in range(10):
+		intString= []
+		for i in range(10):
+			rand = random.randint(0,1)
+			intString.append(rand)
+		startPop.append(intString)
+		totPop.append(intString)
+
+	generations = 1
+	for generation in range(generations):
+		#four children
+		childPop=[]
+		for j in range(2):
+			breakPoint = random.randint(1,9)
+			child = []
+			list1 = startPop[0][:breakPoint]
+			list2 = startPop[1][breakPoint:]
+			child= list1+list2
+
+			list3 = startPop[1][:breakPoint]
+			list4= startPop[0][breakPoint:]
+			child2 = list3+list4
+
+			childPop.append(child)
+			childPop.append(child2)
+		#print str("children"), childPop
+		#mutation checking
+		for x in childPop:
+			for i in range(10):
+				posMut = random.randint(0,100)
+
+				if posMut < 2:
+					if x[i] == 0:
+						x[i] = 1
+					else:
+						x[i] = 0
+
+		#deaths
+		totPop = childPop
+		maxVal = 0
+		maxStr = None
+		secondMax = 0
+		secondStr = None
+
+		for indiv in totPop:
+			rating = sum(indiv)		
+			if rating > maxVal:
+				secondMax = maxVal
+				secondStr = maxStr
+				maxVal = rating
+				maxStr = indiv
+			elif rating > secondMax:
+				secondMax = rating
+				secondStr = indiv
+
+		killSwitch = 0
+		if secondStr is not None and maxStr is not None:
+			startPop = []
+			startPop.append(secondStr)
+			startPop.append(maxStr)
+
+
+		print sum(maxStr)
+
+if __name__ == "__main__":
+	#start()
+	m = Map(100)
+	print m.generation()
+
